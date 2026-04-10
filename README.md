@@ -1,5 +1,6 @@
 # richls_2026_Empirical
-バッジを貼る
+[バッジを貼る](https://img.shields.io/badge/License-MIT-blue)
+
 様々な機能を追加したls
 
 # Discryption
