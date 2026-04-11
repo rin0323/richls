@@ -1,4 +1,4 @@
-# richls_2026_Empirical
+# richls
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://github.com/rin0323/richls_2026_Empirical/blob/main/LICENSE)
 
 様々な機能を追加したls
