@@ -34,4 +34,9 @@ Options:
   -h, --help              ヘルプを表示
 
   -V, --version           バージョンを表示
+
+$ richls
+# 現在のディレクトリにあるファイルを表示
+$ richls documents/
+# documentディレクトリにあるファイルを表示
 ```
