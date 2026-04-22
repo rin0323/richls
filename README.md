@@ -18,7 +18,7 @@ Usage:
   richls -l [OPTIONS] [FILE]
 
 Argument:
-  表示対象のパス。省略した場合は現在のディレクトリを表示します。
+  [FILE] 表示対象のパス。省略した場合は現在のディレクトリを表示します。
 
 Options:
   -l, --long              詳細表示モード
@@ -27,7 +27,7 @@ Options:
       --tagline           README.md の概要を表示
       --pdf-title         PDF 内のタイトルを表示
       --respect-ignore    .gitignore などを考慮して表示
-      --new-mark          24時間以内のファイルに 🆕 を付与
+      --new-mark          24時間以内のファイルに"new"を付与
       --sort <key>        ソート順を指定
                           [name | size | mtime]
 
