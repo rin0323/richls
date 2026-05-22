@@ -1,5 +1,5 @@
 [package]
-name = "REPO_NAME"
+name = "richls"
 version = "0.1.0"
 edition = "2024"
 
