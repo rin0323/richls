@@ -8,5 +8,5 @@ title: "richls documentation"
 
 ## ドキュメント
 
-- [概要](posts/richls-overview/)
-- [使い方](posts/richls-usage/)
+- [概要](https://rin0323.github.io/richls/posts/richls-overview/)
+- [使い方](https://rin0323.github.io/richls/posts/richls-usage/)
