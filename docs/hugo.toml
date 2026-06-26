@@ -1,5 +1,5 @@
-baseURL = "http://localhost:1313/"
-languageCode = "ja-jp"
+baseURL = "https://rin0323.github.io/richls/"
+locale = "ja-jp"
 title = "richls documentation"
 
 [module]
