@@ -4,7 +4,7 @@
 
 `richls` は、標準的な `ls` コマンドを拡張したファイル一覧表示ツールである。
 
-通常のファイル一覧表示に加えて、`-l, --long` 指定時には標準的な `ls -l` に近い詳細情報を表示する。さらに、ファイルサイズの human readable 表示、README の tagline 表示、PDF タイトル表示、24時間以内に作成されたファイルへの `🆕` マーク付与を行うことで、ファイルやディレクトリの内容をより把握しやすくする。
+通常のファイル一覧表示に加えて、`-l, --long` 指定時には標準的な `ls -l` に近い詳細情報を表示する。さらに、ファイルサイズの human readable 表示、README の tagline 表示、PDF タイトル表示、24時間以内に作成されたファイルへの `new` マーク付与を行うことで、ファイルやディレクトリの内容をより把握しやすくする。
 
 ## 2. Input
 
@@ -52,7 +52,7 @@ target/
 * ファイルサイズの human readable 表示
 * ディレクトリ内の `README.md` の tagline 表示
 * PDF ファイル内に埋め込まれたタイトル表示
-* 作成日時が24時間以内のファイルへの `🆕` マーク付与
+* 作成日時が24時間以内のファイルへの `new` マーク付与
 
 ### 4.1 Output Columns
 
@@ -66,7 +66,7 @@ MARK  MODE  LINKS  OWNER  GROUP  SIZE  MTIME  NAME  INFO
 
 | Column  | Description                      |
 | ------- | -------------------------------- |
-| `MARK`  | 作成日時が24時間以内の場合に `🆕` を表示する       |
+| `MARK`  | 作成日時が24時間以内の場合に `new` を表示する      |
 | `MODE`  | ファイル種別およびパーミッション                 |
 | `LINKS` | ハードリンク数                          |
 | `OWNER` | 所有者                              |
@@ -79,7 +79,7 @@ MARK  MODE  LINKS  OWNER  GROUP  SIZE  MTIME  NAME  INFO
 表示例:
 
 ```text
-🆕    -rw-r--r--  1  rin  staff  1.2KB  2026-05-29 14:20  main.rs
+new   -rw-r--r--  1  rin  staff  1.2KB  2026-05-29 14:20  main.rs
       drwxr-xr-x  5  rin  staff  4.0KB  2026-05-28 10:12  docs/       README: 実験資料まとめ
       -rw-r--r--  1  rin  staff  1.2GB  2026-05-20 09:30  paper.pdf   PDF: Generic Malware Unpacking
 ```
@@ -88,7 +88,9 @@ MARK  MODE  LINKS  OWNER  GROUP  SIZE  MTIME  NAME  INFO
 
 ### 5.1 Human Readable Size
 
-`-l, --long` 指定時、ファイルサイズを `1.2KB`、`3.4MB`、`1.2GB` などの人間が読みやすい形式に変換して表示する。
+`-l, --long` 指定時、ファイルサイズを1024を基準として `1.2KB`、`3.4MB`、`1.2GB` などの人間が読みやすい形式に変換して表示する。
+
+最終更新日時はローカル時刻の `YYYY-MM-DD HH:MM` 形式で表示する。
 
 ### 5.2 README Tagline
 
@@ -112,16 +114,16 @@ PDF タイトルは `INFO` 欄に以下の形式で表示する。
 PDF: <title>
 ```
 
-PDF 内にタイトル情報が存在しない場合は、PDF タイトルは表示しない。
+PDF 内にタイトル情報が存在しない場合、タイトルを取得できない場合、またはタイトルが未対応の圧縮形式で格納されている場合は、PDF タイトルを表示しない。一覧処理自体は継続する。
 
 ### 5.4 New Mark
 
-`-l, --long` 指定時、作成日時が24時間以内のファイルに `🆕` を付与して表示する。
+`-l, --long` 指定時、作成日時が24時間以内のファイルに `new` を付与して表示する。
 
-`🆕` は `MARK` 欄に表示する。
+`new` は `MARK` 欄に表示する。
 
 ```text
-🆕    -rw-r--r--  1  rin  staff  1.2KB  2026-05-29 14:20  main.rs
+new   -rw-r--r--  1  rin  staff  1.2KB  2026-05-29 14:20  main.rs
 ```
 
 作成日時を取得できない環境では、実装上の方針として最終更新日時を代替として用いてもよい。
@@ -169,9 +171,9 @@ richls -l --sort mtime
 
 `name` を指定した場合、ファイル名順に並び替える。
 
-`size` を指定した場合、ファイルサイズ順に並び替える。
+`size` を指定した場合、ファイルサイズの大きい順に並び替える。
 
-`mtime` を指定した場合、最終更新日時順に並び替える。
+`mtime` を指定した場合、最終更新日時の新しい順に並び替える。
 
 ## 7. Options
 
@@ -181,7 +183,7 @@ richls -l --sort mtime
         ls -l と同様の情報として、パーミッション、リンク数、所有者、
         グループ、ファイルサイズ、最終更新日時、ファイル名を表示する。
         また、human readable なサイズ表示、README tagline 表示、
-        PDF タイトル表示、🆕 マーク表示を標準で行う。
+        PDF タイトル表示、new マーク表示を標準で行う。
 
 -a, --all
         . で始まる隠しファイルも表示する。
@@ -192,6 +194,10 @@ richls -l --sort mtime
 --sort <key>
         出力順を指定する。
         指定可能な値は name, size, mtime である。
+
+--complete
+        Bash、Elvish、Fish、PowerShell、Zsh 用の補完ファイルを
+        completions/ ディレクトリへ生成する。
 
 -h, --help
         ヘルプを表示する。
@@ -216,6 +222,6 @@ richls -l --sort mtime
 
 本ツールの動作は、入力されたパスに基づいてファイル一覧を取得し、オプションに応じて表示内容を変更するものである。
 
-`-l, --long` 指定時には、標準的な `ls -l` に近い詳細情報を表示し、さらに `richls` 独自の機能として、ファイルサイズの human readable 表示、README tagline 表示、PDF タイトル表示、24時間以内に作成されたファイルへの `🆕` マーク付与を標準で行う。
+`-l, --long` 指定時には、標準的な `ls -l` に近い詳細情報を表示し、さらに `richls` 独自の機能として、ファイルサイズの human readable 表示、README tagline 表示、PDF タイトル表示、24時間以内に作成されたファイルへの `new` マーク付与を標準で行う。
 
 一方、隠しファイルの表示、ignore ファイルの考慮、ソート順の変更は、必要に応じて `-a, --all`、`--respect-ignore`、`--sort` オプションによって有効化する。
