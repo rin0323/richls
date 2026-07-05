@@ -1,126 +1,81 @@
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg(test)]
+use std::ffi::OsString;
+
+use clap::{Parser, ValueEnum};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum SortKey {
     Name,
     Size,
     Mtime,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Parser)]
+#[command(
+    version,
+    about = "List files with readable metadata and contextual information"
+)]
 pub struct Config {
+    /// Path to list
+    #[arg(default_value = ".", value_name = "FILE")]
     pub path: PathBuf,
+
+    /// Show ls -l style metadata and rich information
+    #[arg(short = 'l', long)]
     pub long: bool,
+
+    /// Show hidden files
+    #[arg(short = 'a', long)]
     pub all: bool,
+
+    /// Hide entries matched by .gitignore or .dockerignore
+    #[arg(long)]
     pub respect_ignore: bool,
+
+    /// Sort by name, size, or mtime
+    #[arg(long = "sort", value_enum, default_value = "name", value_name = "KEY")]
     pub sort_key: SortKey,
+
+    /// Generate shell completion files
+    #[arg(long = "complete")]
+    pub completions: bool,
+
+    // These options were exposed by an earlier CLI. Keep accepting them as
+    // compatibility aliases for the complete long format.
+    #[arg(long, hide = true)]
+    pub humanize: bool,
+    #[arg(long, hide = true)]
+    pub tagline: bool,
+    #[arg(long, hide = true)]
+    pub pdf_title: bool,
+    #[arg(long, hide = true)]
+    pub new_mark: bool,
 }
 
-pub fn parse_args<I>(args: I) -> Result<Config, String>
+impl Config {
+    pub fn long_enabled(&self) -> bool {
+        self.long || self.humanize || self.tagline || self.pdf_title || self.new_mark
+    }
+
+    fn normalized(mut self) -> Self {
+        self.long = self.long_enabled();
+        self
+    }
+}
+
+pub fn parse_args() -> Config {
+    Config::parse().normalized()
+}
+
+#[cfg(test)]
+fn try_parse_args_from<I, T>(args: I) -> Result<Config, clap::Error>
 where
-    I: IntoIterator<Item = String>,
+    I: IntoIterator<Item = T>,
+    T: Into<OsString> + Clone,
 {
-    let mut config = Config {
-        path: PathBuf::from("."),
-        long: false,
-        all: false,
-        respect_ignore: false,
-        sort_key: SortKey::Name,
-    };
-    let mut positional_path = None;
-    let mut args = args.into_iter();
-
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "--long" => config.long = true,
-            "--all" => config.all = true,
-            "--respect-ignore" => config.respect_ignore = true,
-            "--humanize" | "--tagline" | "--pdf-title" | "--new-mark" => {
-                config.long = true;
-            }
-            "--sort" => {
-                let Some(key) = args.next() else {
-                    return Err("--sort requires one of: name, size, mtime".to_string());
-                };
-                config.sort_key = parse_sort_key(&key)?;
-            }
-            "-h" | "--help" => {
-                print_help();
-                std::process::exit(0);
-            }
-            "-V" | "--version" => {
-                println!("richls {}", env!("CARGO_PKG_VERSION"));
-                std::process::exit(0);
-            }
-            _ if arg.starts_with("--sort=") => {
-                let key = arg.trim_start_matches("--sort=");
-                config.sort_key = parse_sort_key(key)?;
-            }
-            _ if arg.starts_with('-') && arg.len() > 1 => parse_short_options(&arg, &mut config)?,
-            _ => {
-                if positional_path.is_some() {
-                    return Err("only one path can be specified".to_string());
-                }
-                positional_path = Some(PathBuf::from(arg));
-            }
-        }
-    }
-
-    if let Some(path) = positional_path {
-        config.path = path;
-    }
-
-    Ok(config)
-}
-
-fn parse_short_options(arg: &str, config: &mut Config) -> Result<(), String> {
-    for option in arg.trim_start_matches('-').chars() {
-        match option {
-            'l' => config.long = true,
-            'a' => config.all = true,
-            'h' => {
-                print_help();
-                std::process::exit(0);
-            }
-            'V' => {
-                println!("richls {}", env!("CARGO_PKG_VERSION"));
-                std::process::exit(0);
-            }
-            _ => return Err(format!("unknown option: -{option}")),
-        }
-    }
-    Ok(())
-}
-
-fn parse_sort_key(key: &str) -> Result<SortKey, String> {
-    match key {
-        "name" => Ok(SortKey::Name),
-        "size" => Ok(SortKey::Size),
-        "mtime" => Ok(SortKey::Mtime),
-        _ => Err(format!(
-            "invalid sort key: {key}\navailable values: name, size, mtime"
-        )),
-    }
-}
-
-fn print_help() {
-    println!(
-        "\
-Usage:
-  richls [OPTIONS] [FILE]
-
-Options:
-  -l, --long              Show ls -l style metadata plus rich info
-  -a, --all               Show hidden files
-      --respect-ignore    Hide entries matched by .gitignore/.dockerignore
-      --sort <key>        Sort by name, size, or mtime
-      --humanize          Compatibility alias: enabled by -l
-      --tagline           Compatibility alias: enabled by -l
-      --pdf-title         Compatibility alias: enabled by -l
-      --new-mark          Compatibility alias: enabled by -l
-  -h, --help              Show help
-  -V, --version           Show version"
-    );
+    Config::try_parse_from(args).map(Config::normalized)
 }
 
 #[cfg(test)]
@@ -129,7 +84,7 @@ mod tests {
 
     #[test]
     fn parses_defaults() {
-        let config = parse_args(Vec::<String>::new()).unwrap();
+        let config = try_parse_args_from(["richls"]).unwrap();
         assert_eq!(config.path, PathBuf::from("."));
         assert_eq!(config.sort_key, SortKey::Name);
         assert!(!config.long);
@@ -138,7 +93,7 @@ mod tests {
 
     #[test]
     fn parses_combined_short_options() {
-        let config = parse_args(["-la".to_string(), "src".to_string()]).unwrap();
+        let config = try_parse_args_from(["richls", "-la", "src"]).unwrap();
         assert!(config.long);
         assert!(config.all);
         assert_eq!(config.path, PathBuf::from("src"));
@@ -146,7 +101,15 @@ mod tests {
 
     #[test]
     fn parses_sort() {
-        let config = parse_args(["--sort=size".to_string()]).unwrap();
+        let config = try_parse_args_from(["richls", "--sort=size"]).unwrap();
         assert_eq!(config.sort_key, SortKey::Size);
+    }
+
+    #[test]
+    fn compatibility_options_enable_long_format() {
+        for option in ["--humanize", "--tagline", "--pdf-title", "--new-mark"] {
+            let config = try_parse_args_from(["richls", option]).unwrap();
+            assert!(config.long, "{option} should enable long format");
+        }
     }
 }

@@ -1,0 +1,13 @@
+complete -c richls -l sort -d 'Sort by name, size, or mtime' -r -f -a "name\t''
+size\t''
+mtime\t''"
+complete -c richls -s l -l long -d 'Show ls -l style metadata and rich information'
+complete -c richls -s a -l all -d 'Show hidden files'
+complete -c richls -l respect-ignore -d 'Hide entries matched by .gitignore or .dockerignore'
+complete -c richls -l complete -d 'Generate shell completion files'
+complete -c richls -l humanize
+complete -c richls -l tagline
+complete -c richls -l pdf-title
+complete -c richls -l new-mark
+complete -c richls -s h -l help -d 'Print help'
+complete -c richls -s V -l version -d 'Print version'

@@ -1,29 +1,14 @@
+mod cli;
+mod gencomp;
+
 use std::cmp::Ordering;
-use std::env;
 use std::ffi::OsStr;
 use std::fs::{self, DirEntry, Metadata};
 use std::io;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum SortKey {
-    Name,
-    Size,
-    Mtime,
-}
-
-#[derive(Debug, Clone)]
-struct Config {
-    path: PathBuf,
-    long: bool,
-    humanize: bool,
-    tagline: bool,
-    pdf_title: bool,
-    respect_ignore: bool,
-    new_mark: bool,
-    sort_key: SortKey,
-}
+use cli::{Config, SortKey};
 
 #[derive(Debug, Clone)]
 struct ListingEntry {
@@ -83,7 +68,12 @@ fn main() {
 }
 
 fn run() -> Result<(), String> {
-    let config = parse_args(env::args().skip(1))?;
+    let config = cli::parse_args();
+
+    if config.completions {
+        gencomp::generate(Path::new("completions"));
+        return Ok(());
+    }
 
     if config.tagline {
         print_tagline(&config.path).map_err(|err| err.to_string())?;
@@ -97,90 +87,6 @@ fn run() -> Result<(), String> {
     }
 
     Ok(())
-}
-
-fn parse_args<I>(args: I) -> Result<Config, String>
-where
-    I: IntoIterator<Item = String>,
-{
-    let mut config = Config {
-        path: PathBuf::from("."),
-        long: false,
-        humanize: false,
-        tagline: false,
-        pdf_title: false,
-        respect_ignore: false,
-        new_mark: false,
-        sort_key: SortKey::Name,
-    };
-    let mut positional_path = None;
-    let mut args = args.into_iter();
-
-    while let Some(arg) = args.next() {
-        match arg.as_str() {
-            "-l" | "--long" => config.long = true,
-            "--humanize" => config.humanize = true,
-            "--tagline" => config.tagline = true,
-            "--pdf-title" => config.pdf_title = true,
-            "--respect-ignore" => config.respect_ignore = true,
-            "--new-mark" => config.new_mark = true,
-            "--sort" => {
-                let Some(key) = args.next() else {
-                    return Err("--sort requires one of: name, size, mtime".to_string());
-                };
-                config.sort_key = parse_sort_key(&key)?;
-            }
-            "-h" | "--help" => {
-                print_help();
-                std::process::exit(0);
-            }
-            "-V" | "--version" => {
-                println!("richls {}", env!("CARGO_PKG_VERSION"));
-                std::process::exit(0);
-            }
-            _ if arg.starts_with('-') => return Err(format!("unknown option: {arg}")),
-            _ => {
-                if positional_path.is_some() {
-                    return Err("only one path can be specified".to_string());
-                }
-                positional_path = Some(PathBuf::from(arg));
-            }
-        }
-    }
-
-    if let Some(path) = positional_path {
-        config.path = path;
-    }
-
-    Ok(config)
-}
-
-fn parse_sort_key(key: &str) -> Result<SortKey, String> {
-    match key {
-        "name" => Ok(SortKey::Name),
-        "size" => Ok(SortKey::Size),
-        "mtime" => Ok(SortKey::Mtime),
-        _ => Err(format!("unsupported sort key: {key}")),
-    }
-}
-
-fn print_help() {
-    println!(
-        "\
-Usage:
-  richls [OPTIONS] [FILE]
-
-Options:
-  -l, --long              Show size, modified time, and type
-      --humanize          Show file sizes as KB, MB, GB, ...
-      --tagline           Show the first non-empty line from README.md
-      --pdf-title         Accept PDF title option for compatibility
-      --respect-ignore    Hide simple patterns from .gitignore/.dockerignore
-      --new-mark          Append \"new\" to files modified within 24 hours
-      --sort <key>        Sort by name, size, or mtime
-  -h, --help              Show help
-  -V, --version           Show version"
-    );
 }
 
 fn collect_entries(config: &Config) -> io::Result<Vec<ListingEntry>> {
@@ -203,7 +109,7 @@ fn collect_entries(config: &Config) -> io::Result<Vec<ListingEntry>> {
     for entry in fs::read_dir(&config.path)? {
         let entry = entry?;
         let name = entry_name(&entry);
-        if is_hidden(&name) || ignore_rules.ignores(&name) {
+        if (!config.all && is_hidden(&name)) || ignore_rules.ignores(&name) {
             continue;
         }
         entries.push(ListingEntry {
@@ -360,31 +266,6 @@ fn is_pdf(path: &Path) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn parses_defaults() {
-        let config = parse_args(Vec::<String>::new()).unwrap();
-        assert_eq!(config.path, PathBuf::from("."));
-        assert_eq!(config.sort_key, SortKey::Name);
-        assert!(!config.long);
-    }
-
-    #[test]
-    fn parses_long_humanized_size_sort() {
-        let config = parse_args([
-            "-l".to_string(),
-            "--humanize".to_string(),
-            "--sort".to_string(),
-            "size".to_string(),
-            "testdata".to_string(),
-        ])
-        .unwrap();
-
-        assert!(config.long);
-        assert!(config.humanize);
-        assert_eq!(config.sort_key, SortKey::Size);
-        assert_eq!(config.path, PathBuf::from("testdata"));
-    }
 
     #[test]
     fn humanizes_sizes() {
