@@ -204,4 +204,15 @@ mod tests {
         assert_eq!(human_size(1536), "1.5KB");
         assert_eq!(human_size(1_288_490_188), "1.2GB");
     }
+
+    #[test]
+    fn formats_times_for_humans() {
+        let formatted = format_system_time(UNIX_EPOCH);
+
+        assert_eq!(formatted.len(), 16);
+        assert_eq!(&formatted[4..5], "-");
+        assert_eq!(&formatted[7..8], "-");
+        assert_eq!(&formatted[10..11], " ");
+        assert_eq!(&formatted[13..14], ":");
+    }
 }

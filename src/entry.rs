@@ -73,7 +73,29 @@ fn read_rich_info(path: &std::path::Path, metadata: &Metadata) -> Option<String>
 
 fn is_new(metadata: &Metadata) -> bool {
     let created_or_modified = metadata.created().or_else(|_| metadata.modified()).ok();
-    created_or_modified
-        .and_then(|time| SystemTime::now().duration_since(time).ok())
-        .is_some_and(|age| age <= Duration::from_secs(24 * 60 * 60))
+    created_or_modified.is_some_and(|time| is_within_last_day(time, SystemTime::now()))
+}
+
+fn is_within_last_day(time: SystemTime, now: SystemTime) -> bool {
+    now.duration_since(time)
+        .is_ok_and(|age| age <= Duration::from_secs(24 * 60 * 60))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn detects_times_within_the_last_day() {
+        let now = UNIX_EPOCH + Duration::from_secs(3 * 24 * 60 * 60);
+
+        assert!(is_within_last_day(
+            now - Duration::from_secs(23 * 60 * 60),
+            now
+        ));
+        assert!(!is_within_last_day(
+            now - Duration::from_secs(25 * 60 * 60),
+            now
+        ));
+    }
 }
