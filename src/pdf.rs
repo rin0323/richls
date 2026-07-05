@@ -14,14 +14,31 @@ pub fn read_pdf_title(path: &Path) -> Option<String> {
 
 fn find_pdf_title(bytes: &[u8]) -> Option<String> {
     let marker = b"/Title";
-    let start = bytes
-        .windows(marker.len())
-        .position(|window| window == marker)?;
-    let after_marker = &bytes[start + marker.len()..];
-    let open = after_marker.iter().position(|byte| *byte == b'(')?;
-    let value = read_pdf_string(&after_marker[open + 1..])?;
+    let mut search_from = 0;
 
-    decode_pdf_string(&value)
+    while let Some(offset) = bytes[search_from..]
+        .windows(marker.len())
+        .position(|window| window == marker)
+    {
+        let start = search_from + offset + marker.len();
+        let after_marker = bytes[start..].trim_ascii_start();
+
+        let value = match after_marker.first() {
+            Some(b'(') => read_pdf_string(&after_marker[1..]),
+            Some(b'<') if !after_marker.starts_with(b"<<") => {
+                read_pdf_hex_string(&after_marker[1..])
+            }
+            _ => None,
+        };
+
+        if let Some(title) = value.and_then(|value| decode_pdf_string(&value)) {
+            return Some(title);
+        }
+
+        search_from = start;
+    }
+
+    None
 }
 
 fn read_pdf_string(bytes: &[u8]) -> Option<Vec<u8>> {
@@ -54,6 +71,36 @@ fn read_pdf_string(bytes: &[u8]) -> Option<Vec<u8>> {
     }
 
     None
+}
+
+fn read_pdf_hex_string(bytes: &[u8]) -> Option<Vec<u8>> {
+    let end = bytes.iter().position(|byte| *byte == b'>')?;
+    let digits: Vec<u8> = bytes[..end]
+        .iter()
+        .copied()
+        .filter(|byte| !byte.is_ascii_whitespace())
+        .collect();
+    let mut result = Vec::with_capacity(digits.len().div_ceil(2));
+
+    for pair in digits.chunks(2) {
+        let high = hex_value(pair[0])?;
+        let low = match pair.get(1) {
+            Some(value) => hex_value(*value)?,
+            None => 0,
+        };
+        result.push((high << 4) | low);
+    }
+
+    Some(result)
+}
+
+fn hex_value(value: u8) -> Option<u8> {
+    match value {
+        b'0'..=b'9' => Some(value - b'0'),
+        b'a'..=b'f' => Some(value - b'a' + 10),
+        b'A'..=b'F' => Some(value - b'A' + 10),
+        _ => None,
+    }
 }
 
 fn decode_pdf_string(bytes: &[u8]) -> Option<String> {
@@ -90,5 +137,18 @@ mod tests {
     fn extracts_escaped_title() {
         let bytes = br"<< /Title (A \(Small\) Paper) >>";
         assert_eq!(find_pdf_title(bytes), Some("A (Small) Paper".to_string()));
+    }
+
+    #[test]
+    fn extracts_utf16_hex_title() {
+        let bytes = b"<< /Title <FEFF65E5672C8A9E> >>";
+        assert_eq!(find_pdf_title(bytes), Some("日本語".to_string()));
+    }
+
+    #[test]
+    fn skips_similar_keys_and_malformed_titles() {
+        assert_eq!(find_pdf_title(b"<< /TitleFont (Helvetica) >>"), None);
+        assert_eq!(find_pdf_title(b"<< /Title <not-hex> >>"), None);
+        assert_eq!(find_pdf_title(b"<< /Author (rin) >>"), None);
     }
 }
