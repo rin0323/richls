@@ -180,7 +180,7 @@ pub fn format_system_time(time: SystemTime) -> String {
     unsafe {
         let mut tm = std::mem::zeroed();
         if localtime_r(&timestamp, &mut tm).is_null() {
-            return timestamp.to_string();
+            return "-".to_string();
         }
 
         format!(
@@ -200,7 +200,10 @@ mod tests {
 
     #[test]
     fn humanizes_sizes() {
+        assert_eq!(human_size(0), "0B");
         assert_eq!(human_size(999), "999B");
+        assert_eq!(human_size(1023), "1023B");
+        assert_eq!(human_size(1024), "1.0KB");
         assert_eq!(human_size(1536), "1.5KB");
         assert_eq!(human_size(1_288_490_188), "1.2GB");
     }
@@ -214,5 +217,11 @@ mod tests {
         assert_eq!(&formatted[7..8], "-");
         assert_eq!(&formatted[10..11], " ");
         assert_eq!(&formatted[13..14], ":");
+    }
+
+    #[test]
+    fn rejects_times_before_the_unix_epoch() {
+        let before_epoch = UNIX_EPOCH - std::time::Duration::from_secs(1);
+        assert_eq!(format_system_time(before_epoch), "-");
     }
 }

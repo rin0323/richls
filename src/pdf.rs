@@ -8,8 +8,16 @@ pub fn is_pdf(path: &Path) -> bool {
 
 pub fn read_pdf_title(path: &Path) -> Option<String> {
     let bytes = fs::read(path).ok()?;
-    let title = find_pdf_title(&bytes)?;
-    Some(format!("PDF: {}", title.trim()))
+    let title = find_pdf_title(&bytes);
+    pdf_display_label(title.as_deref())
+}
+
+/// Formats a PDF title for the INFO column, or leaves the column empty.
+pub fn pdf_display_label(title: Option<&str>) -> Option<String> {
+    title
+        .map(str::trim)
+        .filter(|title| !title.is_empty())
+        .map(|title| format!("PDF: {title}"))
 }
 
 fn find_pdf_title(bytes: &[u8]) -> Option<String> {
@@ -150,5 +158,19 @@ mod tests {
         assert_eq!(find_pdf_title(b"<< /TitleFont (Helvetica) >>"), None);
         assert_eq!(find_pdf_title(b"<< /Title <not-hex> >>"), None);
         assert_eq!(find_pdf_title(b"<< /Author (rin) >>"), None);
+    }
+
+    #[test]
+    fn labels_available_titles() {
+        assert_eq!(
+            pdf_display_label(Some("  Generic Malware Unpacking  ")),
+            Some("PDF: Generic Malware Unpacking".to_string())
+        );
+    }
+
+    #[test]
+    fn omits_label_when_title_is_unavailable() {
+        assert_eq!(pdf_display_label(None), None);
+        assert_eq!(pdf_display_label(Some("  ")), None);
     }
 }

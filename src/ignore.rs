@@ -132,4 +132,12 @@ mod tests {
         assert_eq!(normalize_pattern(".vscode/*"), Some(".vscode".to_string()));
         assert_eq!(normalize_pattern("**/*.rs.bk"), Some("*.rs.bk".to_string()));
     }
+
+    #[test]
+    fn identifies_dotfiles_as_hidden() {
+        assert!(is_hidden(".hidden"));
+        assert!(is_hidden(".git"));
+        assert!(!is_hidden("visible"));
+        assert!(!is_hidden("archive.tar.gz"));
+    }
 }
