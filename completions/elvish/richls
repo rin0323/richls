@@ -19,8 +19,8 @@ set edit:completion:arg-completer[richls] = {|@words|
     var completions = [
         &'richls'= {
             cand --sort 'Sort by name, size, or mtime'
-            cand -l 'Show ls -l style metadata and rich information'
-            cand --long 'Show ls -l style metadata and rich information'
+            cand -l 'Show metadata, human-readable sizes, and rich information'
+            cand --long 'Show metadata, human-readable sizes, and rich information'
             cand -a 'Show hidden files'
             cand --all 'Show hidden files'
             cand --respect-ignore 'Hide entries matched by .gitignore or .dockerignore'

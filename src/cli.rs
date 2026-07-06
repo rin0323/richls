@@ -22,7 +22,7 @@ pub struct Config {
     #[arg(default_value = ".", value_name = "FILE")]
     pub path: PathBuf,
 
-    /// Show ls -l style metadata and rich information
+    /// Show metadata, human-readable sizes, and rich information
     #[arg(short = 'l', long)]
     pub long: bool,
 

@@ -53,7 +53,7 @@ Arguments:
   [FILE]  Path to list [default: .]
 
 Options:
-  -l, --long             Show ls -l style metadata and rich information
+  -l, --long             Show metadata, human-readable sizes, and rich information
   -a, --all              Show hidden files
       --respect-ignore   Hide entries matched by .gitignore or .dockerignore
       --sort <KEY>       Sort by name, size, or mtime [default: name]

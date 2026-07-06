@@ -22,8 +22,8 @@ Register-ArgumentCompleter -Native -CommandName 'richls' -ScriptBlock {
     $completions = @(switch ($command) {
         'richls' {
             [CompletionResult]::new('--sort', '--sort', [CompletionResultType]::ParameterName, 'Sort by name, size, or mtime')
-            [CompletionResult]::new('-l', '-l', [CompletionResultType]::ParameterName, 'Show ls -l style metadata and rich information')
-            [CompletionResult]::new('--long', '--long', [CompletionResultType]::ParameterName, 'Show ls -l style metadata and rich information')
+            [CompletionResult]::new('-l', '-l', [CompletionResultType]::ParameterName, 'Show metadata, human-readable sizes, and rich information')
+            [CompletionResult]::new('--long', '--long', [CompletionResultType]::ParameterName, 'Show metadata, human-readable sizes, and rich information')
             [CompletionResult]::new('-a', '-a', [CompletionResultType]::ParameterName, 'Show hidden files')
             [CompletionResult]::new('--all', '--all', [CompletionResultType]::ParameterName, 'Show hidden files')
             [CompletionResult]::new('--respect-ignore', '--respect-ignore', [CompletionResultType]::ParameterName, 'Hide entries matched by .gitignore or .dockerignore')
