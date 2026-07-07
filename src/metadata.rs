@@ -1,11 +1,15 @@
-use std::ffi::CStr;
 use std::fs::Metadata;
-use std::os::raw::{c_char, c_int};
+use std::os::raw::c_int;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[cfg(unix)]
+use std::ffi::CStr;
+#[cfg(unix)]
+use std::os::raw::c_char;
+#[cfg(unix)]
 use std::os::unix::fs::{FileTypeExt, MetadataExt, PermissionsExt};
 
+#[cfg(unix)]
 #[repr(C)]
 struct Passwd {
     pw_name: *mut c_char,
@@ -17,6 +21,7 @@ struct Passwd {
     pw_shell: *mut c_char,
 }
 
+#[cfg(unix)]
 #[repr(C)]
 struct Group {
     gr_name: *mut c_char,
@@ -36,14 +41,22 @@ struct Tm {
     tm_wday: c_int,
     tm_yday: c_int,
     tm_isdst: c_int,
+    #[cfg(unix)]
     tm_gmtoff: isize,
+    #[cfg(unix)]
     tm_zone: *const c_char,
 }
 
+#[cfg(unix)]
 unsafe extern "C" {
     fn getpwuid(uid: u32) -> *mut Passwd;
     fn getgrgid(gid: u32) -> *mut Group;
     fn localtime_r(timep: *const i64, result: *mut Tm) -> *mut Tm;
+}
+
+#[cfg(windows)]
+unsafe extern "C" {
+    fn localtime_s(result: *mut Tm, timep: *const i64) -> c_int;
 }
 
 pub fn mode_string(metadata: &Metadata) -> String {
@@ -177,21 +190,49 @@ pub fn format_system_time(time: SystemTime) -> String {
     };
     let timestamp = duration.as_secs() as i64;
 
+    let Some(tm) = local_time(timestamp) else {
+        return "-".to_string();
+    };
+
+    format_tm(&tm)
+}
+
+#[cfg(unix)]
+fn local_time(timestamp: i64) -> Option<Tm> {
     unsafe {
         let mut tm = std::mem::zeroed();
         if localtime_r(&timestamp, &mut tm).is_null() {
-            return "-".to_string();
+            return None;
         }
-
-        format!(
-            "{:04}-{:02}-{:02} {:02}:{:02}",
-            tm.tm_year + 1900,
-            tm.tm_mon + 1,
-            tm.tm_mday,
-            tm.tm_hour,
-            tm.tm_min
-        )
+        Some(tm)
     }
+}
+
+#[cfg(windows)]
+fn local_time(timestamp: i64) -> Option<Tm> {
+    unsafe {
+        let mut tm = std::mem::zeroed();
+        if localtime_s(&mut tm, &timestamp) != 0 {
+            return None;
+        }
+        Some(tm)
+    }
+}
+
+#[cfg(not(any(unix, windows)))]
+fn local_time(_timestamp: i64) -> Option<Tm> {
+    None
+}
+
+fn format_tm(tm: &Tm) -> String {
+    format!(
+        "{:04}-{:02}-{:02} {:02}:{:02}",
+        tm.tm_year + 1900,
+        tm.tm_mon + 1,
+        tm.tm_mday,
+        tm.tm_hour,
+        tm.tm_min
+    )
 }
 
 #[cfg(test)]
