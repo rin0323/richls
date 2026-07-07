@@ -1,5 +1,4 @@
 use std::fs::Metadata;
-use std::os::raw::c_int;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[cfg(unix)]
@@ -30,33 +29,10 @@ struct Group {
     gr_mem: *mut *mut c_char,
 }
 
-#[repr(C)]
-struct Tm {
-    tm_sec: c_int,
-    tm_min: c_int,
-    tm_hour: c_int,
-    tm_mday: c_int,
-    tm_mon: c_int,
-    tm_year: c_int,
-    tm_wday: c_int,
-    tm_yday: c_int,
-    tm_isdst: c_int,
-    #[cfg(unix)]
-    tm_gmtoff: isize,
-    #[cfg(unix)]
-    tm_zone: *const c_char,
-}
-
 #[cfg(unix)]
 unsafe extern "C" {
     fn getpwuid(uid: u32) -> *mut Passwd;
     fn getgrgid(gid: u32) -> *mut Group;
-    fn localtime_r(timep: *const i64, result: *mut Tm) -> *mut Tm;
-}
-
-#[cfg(windows)]
-unsafe extern "C" {
-    fn localtime_s(result: *mut Tm, timep: *const i64) -> c_int;
 }
 
 pub fn mode_string(metadata: &Metadata) -> String {
@@ -185,54 +161,12 @@ pub fn human_size(size: u64) -> String {
 }
 
 pub fn format_system_time(time: SystemTime) -> String {
-    let Ok(duration) = time.duration_since(UNIX_EPOCH) else {
+    if time.duration_since(UNIX_EPOCH).is_err() {
         return "-".to_string();
-    };
-    let timestamp = duration.as_secs() as i64;
-
-    let Some(tm) = local_time(timestamp) else {
-        return "-".to_string();
-    };
-
-    format_tm(&tm)
-}
-
-#[cfg(unix)]
-fn local_time(timestamp: i64) -> Option<Tm> {
-    unsafe {
-        let mut tm = std::mem::zeroed();
-        if localtime_r(&timestamp, &mut tm).is_null() {
-            return None;
-        }
-        Some(tm)
     }
-}
 
-#[cfg(windows)]
-fn local_time(timestamp: i64) -> Option<Tm> {
-    unsafe {
-        let mut tm = std::mem::zeroed();
-        if localtime_s(&mut tm, &timestamp) != 0 {
-            return None;
-        }
-        Some(tm)
-    }
-}
-
-#[cfg(not(any(unix, windows)))]
-fn local_time(_timestamp: i64) -> Option<Tm> {
-    None
-}
-
-fn format_tm(tm: &Tm) -> String {
-    format!(
-        "{:04}-{:02}-{:02} {:02}:{:02}",
-        tm.tm_year + 1900,
-        tm.tm_mon + 1,
-        tm.tm_mday,
-        tm.tm_hour,
-        tm.tm_min
-    )
+    let datetime: chrono::DateTime<chrono::Local> = time.into();
+    datetime.format("%Y-%m-%d %H:%M").to_string()
 }
 
 #[cfg(test)]
