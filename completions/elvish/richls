@@ -1,0 +1,39 @@
+
+use builtin;
+use str;
+
+set edit:completion:arg-completer[richls] = {|@words|
+    fn spaces {|n|
+        builtin:repeat $n ' ' | str:join ''
+    }
+    fn cand {|text desc|
+        edit:complex-candidate $text &display=$text' '(spaces (- 14 (wcswidth $text)))$desc
+    }
+    var command = 'richls'
+    for word $words[1..-1] {
+        if (str:has-prefix $word '-') {
+            break
+        }
+        set command = $command';'$word
+    }
+    var completions = [
+        &'richls'= {
+            cand --sort 'Sort by name, size, or mtime'
+            cand -l 'Show metadata, human-readable sizes, and rich information'
+            cand --long 'Show metadata, human-readable sizes, and rich information'
+            cand -a 'Show hidden files'
+            cand --all 'Show hidden files'
+            cand --respect-ignore 'Hide entries matched by .gitignore or .dockerignore'
+            cand --complete 'Generate shell completion files'
+            cand --humanize 'humanize'
+            cand --tagline 'tagline'
+            cand --pdf-title 'pdf-title'
+            cand --new-mark 'new-mark'
+            cand -h 'Print help'
+            cand --help 'Print help'
+            cand -V 'Print version'
+            cand --version 'Print version'
+        }
+    ]
+    $completions[$command]
+}
