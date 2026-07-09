@@ -19,6 +19,7 @@ pub struct EntryInfo {
     pub mtime: SystemTime,
     pub mtime_text: String,
     pub is_new: bool,
+    pub is_regular_file: bool,
     pub info: Option<String>,
 }
 
@@ -52,6 +53,7 @@ impl EntryInfo {
             mtime,
             mtime_text: metadata::format_system_time(mtime),
             is_new: is_new(&metadata),
+            is_regular_file: metadata.is_file(),
             name,
             display_name,
             info,
