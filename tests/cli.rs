@@ -1,4 +1,5 @@
 use std::fs;
+use std::time::{Duration, SystemTime};
 
 use assert_cmd::Command;
 use filetime::{FileTime, set_file_mtime};
@@ -14,6 +15,7 @@ fn help_documents_main_options_and_long_size_behavior() {
     richls().arg("--help").assert().success().stdout(
         predicate::str::contains("-a, --all")
             .and(predicate::str::contains("-l, --long"))
+            .and(predicate::str::contains("--clean-suggest"))
             .and(predicate::str::contains("human-readable")),
     );
 }
@@ -128,4 +130,70 @@ fn missing_pdf_title_leaves_info_column_empty() {
                 .and(predicate::str::contains("PDF:").not())
                 .and(predicate::str::contains("[pdf]").not()),
         );
+}
+
+#[test]
+fn clean_suggest_lists_cleanup_candidates() {
+    let directory = tempdir().expect("temporary directory should be created");
+
+    for (name, contents) in [
+        ("report_copy.pdf", "copy"),
+        ("資料 のコピー.pdf", "copy"),
+        ("report (1).pdf", "copy"),
+        ("image (2).png", "copy"),
+        ("main_old.rs", "backup"),
+        ("report_backup.pdf", "backup"),
+        ("data.bak", "backup"),
+        ("temp.tmp", "temporary"),
+        ("memo.swp", "temporary"),
+        ("note.txt~", "temporary"),
+        ("normal.txt", "normal"),
+        ("report_copy_old.pdf", "multiple"),
+        ("archive.txt", "old"),
+    ] {
+        fs::write(directory.path().join(name), contents).expect("fixture should be written");
+    }
+
+    fs::write(directory.path().join("empty.txt"), "").expect("empty fixture should be written");
+    let old_mtime =
+        FileTime::from_system_time(SystemTime::now() - Duration::from_secs(181 * 24 * 60 * 60));
+    set_file_mtime(directory.path().join("archive.txt"), old_mtime)
+        .expect("archive fixture mtime should be set");
+    set_file_mtime(directory.path().join("report_copy_old.pdf"), old_mtime)
+        .expect("multiple fixture mtime should be set");
+    fs::create_dir(directory.path().join("directory_copy"))
+        .expect("directory fixture should exist");
+
+    let output = richls()
+        .current_dir(directory.path())
+        .arg("--clean-suggest")
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let stdout = String::from_utf8(output).expect("stdout should be utf8");
+
+    assert!(stdout.contains("Clean suggestions:"));
+    assert!(stdout.contains("report_copy.pdf"));
+    assert!(stdout.contains("資料 のコピー.pdf"));
+    assert!(stdout.contains("report (1).pdf"));
+    assert!(stdout.contains("image (2).png"));
+    assert!(stdout.contains("main_old.rs"));
+    assert!(stdout.contains("report_backup.pdf"));
+    assert!(stdout.contains("data.bak"));
+    assert!(stdout.contains("empty.txt"));
+    assert!(stdout.contains("archive.txt"));
+    assert!(stdout.contains("temp.tmp"));
+    assert!(stdout.contains("memo.swp"));
+    assert!(stdout.contains("note.txt~"));
+    assert!(stdout.contains("copied file name"));
+    assert!(stdout.contains("backup-like file name"));
+    assert!(stdout.contains("empty file"));
+    assert!(stdout.contains("not modified for 180+ days"));
+    assert!(stdout.contains("temporary file"));
+    assert!(stdout.contains("report_copy_old.pdf"));
+    assert!(stdout.contains("copied file name, backup-like file name, not modified for 180+ days"));
+    assert!(!stdout.contains("normal.txt"));
+    assert!(!stdout.contains("directory_copy"));
 }
