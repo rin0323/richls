@@ -10,6 +10,8 @@ const BACKUP_REASON: &str = "backup-like file name";
 const EMPTY_REASON: &str = "empty file";
 const OLD_REASON: &str = "not modified for 180+ days";
 const TEMPORARY_REASON: &str = "temporary file";
+const JAPANESE_COPY: &str = "コピー";
+const MACOS_DECOMPOSED_JAPANESE_COPY: &str = "コヒ\u{309a}ー";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CleanSuggestion {
@@ -83,7 +85,11 @@ fn push_reason(reasons: &mut Vec<String>, detected: bool, reason: &str) {
 
 fn is_copy_like_name(name: &str) -> bool {
     let name = name.to_lowercase();
-    name.contains("copy") || name.contains("コピー") || has_windows_copy_number(&name)
+    name.contains("copy") || contains_japanese_copy(&name) || has_windows_copy_number(&name)
+}
+
+fn contains_japanese_copy(name: &str) -> bool {
+    name.contains(JAPANESE_COPY) || name.contains(MACOS_DECOMPOSED_JAPANESE_COPY)
 }
 
 fn has_windows_copy_number(name: &str) -> bool {
@@ -183,7 +189,14 @@ mod tests {
 
     #[test]
     fn detects_japanese_copy_names() {
-        for name in ["資料_コピー.pdf", "資料のコピー.pdf", "資料 のコピー.pdf"] {
+        for name in [
+            "資料_コピー.pdf",
+            "資料のコピー.pdf",
+            "資料 のコピー.pdf",
+            "資料_コヒ\u{309a}ー.pdf",
+            "資料のコヒ\u{309a}ー.pdf",
+            "資料 のコヒ\u{309a}ー.pdf",
+        ] {
             assert_eq!(reasons_for_name(name), vec![COPIED_REASON.to_string()]);
         }
     }

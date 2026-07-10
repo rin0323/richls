@@ -195,6 +195,28 @@ fn clean_suggest_lists_copy_like_names_without_empty_reason() {
 }
 
 #[test]
+fn clean_suggest_lists_macos_decomposed_copy_name_for_path_argument() {
+    let directory = tempdir().expect("temporary directory should be created");
+    let macos_decomposed_copy = "資料 のコヒ\u{309a}ー.pdf";
+    fs::write(directory.path().join(macos_decomposed_copy), "data")
+        .expect("macOS copy-like fixture should be written");
+
+    let output = richls()
+        .arg("--clean-suggest")
+        .arg(directory.path())
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let stdout = String::from_utf8(output).expect("stdout should be utf8");
+    let line = output_line(&stdout, macos_decomposed_copy);
+
+    assert!(line.contains("copied file name"));
+    assert!(!line.contains("empty file"));
+}
+
+#[test]
 fn clean_suggest_lists_backup_and_temporary_names_without_empty_reason() {
     let directory = tempdir().expect("temporary directory should be created");
 
