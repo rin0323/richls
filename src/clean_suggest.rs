@@ -183,18 +183,9 @@ mod tests {
 
     #[test]
     fn detects_japanese_copy_names() {
-        assert_eq!(
-            reasons_for_name("資料_コピー.pdf"),
-            vec![COPIED_REASON.to_string()]
-        );
-    }
-
-    #[test]
-    fn detects_macos_copy_names() {
-        assert_eq!(
-            reasons_for_name("資料 のコピー.pdf"),
-            vec![COPIED_REASON.to_string()]
-        );
+        for name in ["資料_コピー.pdf", "資料のコピー.pdf", "資料 のコピー.pdf"] {
+            assert_eq!(reasons_for_name(name), vec![COPIED_REASON.to_string()]);
+        }
     }
 
     #[test]
