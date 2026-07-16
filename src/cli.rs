@@ -38,8 +38,9 @@ pub struct Config {
     #[arg(long = "sort", value_enum, default_value = "name", value_name = "KEY")]
     pub sort_key: SortKey,
 
-    /// Generate shell completion files
-    #[arg(long = "complete")]
+    #[cfg(debug_assertions)]
+    /// Generate completion script files for supported shells.
+    #[arg(long)]
     pub completions: bool,
 
     /// Suggest cleanup candidate files without deleting them
@@ -51,8 +52,6 @@ pub struct Config {
     #[arg(long, hide = true)]
     pub humanize: bool,
     #[arg(long, hide = true)]
-    pub tagline: bool,
-    #[arg(long, hide = true)]
     pub pdf_title: bool,
     #[arg(long, hide = true)]
     pub new_mark: bool,
@@ -60,7 +59,7 @@ pub struct Config {
 
 impl Config {
     pub fn long_enabled(&self) -> bool {
-        self.long || self.humanize || self.tagline || self.pdf_title || self.new_mark
+        self.long || self.humanize || self.pdf_title || self.new_mark
     }
 
     fn normalized(mut self) -> Self {
@@ -93,6 +92,8 @@ mod tests {
         assert_eq!(config.sort_key, SortKey::Name);
         assert!(!config.long);
         assert!(!config.all);
+        #[cfg(debug_assertions)]
+        assert!(!config.completions);
         assert!(!config.clean_suggest);
     }
 
@@ -118,9 +119,26 @@ mod tests {
 
     #[test]
     fn compatibility_options_enable_long_format() {
-        for option in ["--humanize", "--tagline", "--pdf-title", "--new-mark"] {
+        for option in ["--humanize", "--pdf-title", "--new-mark"] {
             let config = try_parse_args_from(["richls", option]).unwrap();
             assert!(config.long, "{option} should enable long format");
         }
+    }
+
+    #[test]
+    fn tagline_option_is_not_defined() {
+        assert!(try_parse_args_from(["richls", "--tagline"]).is_err());
+    }
+
+    #[test]
+    fn complete_option_is_not_defined() {
+        assert!(try_parse_args_from(["richls", "--complete"]).is_err());
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    fn completions_option_is_debug_only() {
+        let config = try_parse_args_from(["richls", "--completions"]).unwrap();
+        assert!(config.completions);
     }
 }

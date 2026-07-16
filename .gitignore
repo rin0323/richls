@@ -75,6 +75,7 @@ echo "docs/.hugo_build.lock" >> .gitignore
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,rust,macos/target
 docs/public/
+/assets/completions/
 docs/.hugo_build.lock
 docs/.hugo_build.lock
 docs/public/

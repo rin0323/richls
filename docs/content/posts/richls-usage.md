@@ -3,7 +3,7 @@ title: "richls Usage"
 date: 2026-06-26T00:00:00+09:00
 draft: false
 summary: "richls の基本的な使い方と、よく使うオプションの組み合わせを紹介します。"
-description: "richls の実行方法、パス指定、詳細表示、README や PDF 情報の確認方法を説明します。"
+description: "richls の実行方法、パス指定、詳細表示、PDF 情報の確認方法を説明します。"
 tags: ["richls", "usage", "cli"]
 categories: ["Guide"]
 ShowToc: true
@@ -53,22 +53,13 @@ richls -l --humanize ./assets
 `--humanize` は、ファイルサイズを KB / MB / GB などの形式で読みやすく表示するためのオプションです。
 現行実装では、`--humanize` は詳細表示を有効にする互換オプションとして扱われます。
 
-## README の概要を見る
-
-```bash
-richls --tagline ./packages
-```
-
-`--tagline` を指定すると、ディレクトリ内に `README.md` が存在する場合、その概要や先頭行を表示します。
-パッケージやサブプロジェクトが並ぶディレクトリで、各項目の役割をすばやく把握できます。
-
 ## PDF のタイトルを見る
 
 ```bash
 richls --pdf-title ./papers
 ```
 
-`--pdf-title` を指定すると、PDF ファイルに埋め込まれたタイトルを表示します。
+`--pdf-title` を指定すると、PDF ファイルのメタデータTitleを表示します。
 ファイル名だけでは内容が分かりにくい資料、論文、仕様書の確認に向いています。
 
 ## ignore ファイルを尊重する
@@ -108,10 +99,10 @@ richls --sort mtime .
 richls -l --humanize --sort size .
 ```
 
-プロジェクトの構成を README の概要付きで確認します。
+プロジェクトの構成を ignore ファイルを反映して確認します。
 
 ```bash
-richls --tagline --respect-ignore .
+richls -l --respect-ignore .
 ```
 
 最近追加または更新された項目を確認します。

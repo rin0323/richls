@@ -89,12 +89,23 @@ Options:
 
 ## Examples
 
+`examples/basic_usage.rs` は、よく使う `richls` コマンド例を出力する使用例プログラムです。
+
+```bash
+cargo run --example basic_usage
+```
+
+出力される例は以下と同じ内容です。
+
 ```bash
 # カレントディレクトリを表示
 richls
 
 # 隠しファイルを含めて詳細表示
 richls -la
+
+# PDFメタデータTitleを表示
+richls --pdf-title ./papers
 
 # ignoreファイルを考慮し、更新日時の新しい順に表示
 richls -l --respect-ignore --sort mtime documents/
