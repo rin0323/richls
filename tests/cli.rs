@@ -35,8 +35,18 @@ fn help_documents_main_options_and_long_size_behavior() {
         predicate::str::contains("-a, --all")
             .and(predicate::str::contains("-l, --long"))
             .and(predicate::str::contains("--clean-suggest"))
+            .and(predicate::str::contains("--tagline").not())
             .and(predicate::str::contains("human-readable")),
     );
+}
+
+#[test]
+fn tagline_option_is_rejected() {
+    richls()
+        .arg("--tagline")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("--tagline"));
 }
 
 #[test]
@@ -92,40 +102,25 @@ fn long_listing_contains_metadata_human_size_and_readable_time() {
 }
 
 #[test]
-fn long_listing_displays_directory_readme_tagline() {
-    let directory = tempdir().expect("temporary directory should be created");
-    let docs = directory.path().join("docs");
-    fs::create_dir(&docs).expect("docs fixture should be created");
-    fs::write(docs.join("README.md"), "# Fixture documentation\n")
-        .expect("README fixture should be written");
-
-    richls()
-        .current_dir(directory.path())
-        .arg("-l")
-        .assert()
-        .success()
-        .stdout(
-            predicate::str::contains("docs/")
-                .and(predicate::str::contains("README: Fixture documentation")),
-        );
-}
-
-#[test]
 fn pdf_title_is_displayed_when_available() {
     let directory = tempdir().expect("temporary directory should be created");
     fs::write(
-        directory.path().join("titled.pdf"),
-        b"%PDF-1.4\n<< /Title (Fixture PDF Title) >>",
+        directory.path().join("report_final.pdf"),
+        b"%PDF-1.4
+1 0 obj << /Title (report_final.pdf) >> endobj
+2 0 obj << /Title (Fixture PDF Title) >> endobj
+trailer << /Info 2 0 R >>",
     )
     .expect("PDF fixture should be written");
 
     richls()
         .current_dir(directory.path())
-        .args(["-l", "titled.pdf"])
+        .args(["--pdf-title", "report_final.pdf"])
         .assert()
         .success()
         .stdout(
             predicate::str::contains("PDF: Fixture PDF Title")
+                .and(predicate::str::contains("PDF: report_final.pdf").not())
                 .and(predicate::str::contains("[pdf]").not()),
         );
 }
@@ -149,6 +144,86 @@ fn missing_pdf_title_leaves_info_column_empty() {
                 .and(predicate::str::contains("PDF:").not())
                 .and(predicate::str::contains("[pdf]").not()),
         );
+}
+
+#[test]
+fn empty_pdf_title_leaves_info_column_empty() {
+    let directory = tempdir().expect("temporary directory should be created");
+    fs::write(
+        directory.path().join("empty-title.pdf"),
+        b"%PDF-1.4\ntrailer << /Info << /Title (   ) >> >>",
+    )
+    .expect("PDF fixture should be written");
+
+    richls()
+        .current_dir(directory.path())
+        .args(["--pdf-title", "empty-title.pdf"])
+        .assert()
+        .success()
+        .stdout(
+            predicate::str::contains("empty-title.pdf").and(predicate::str::contains("PDF:").not()),
+        );
+}
+
+#[test]
+fn broken_pdf_does_not_fail_listing() {
+    let directory = tempdir().expect("temporary directory should be created");
+    fs::write(
+        directory.path().join("broken.pdf"),
+        b"not a pdf /Title (Fake)",
+    )
+    .expect("PDF fixture should be written");
+
+    richls()
+        .current_dir(directory.path())
+        .args(["--pdf-title", "broken.pdf"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("broken.pdf").and(predicate::str::contains("PDF:").not()));
+}
+
+#[test]
+fn multiple_pdf_titles_are_displayed_from_metadata() {
+    let directory = tempdir().expect("temporary directory should be created");
+    fs::write(
+        directory.path().join("alpha.pdf"),
+        b"%PDF-1.4\ntrailer << /Info << /Title (Alpha Metadata) >> >>",
+    )
+    .expect("alpha fixture should be written");
+    fs::write(
+        directory.path().join("beta.pdf"),
+        b"%PDF-1.4
+4 0 obj << /Title <FEFF65E5672C8A9E> >> endobj
+trailer << /Info 4 0 R >>",
+    )
+    .expect("beta fixture should be written");
+
+    richls()
+        .current_dir(directory.path())
+        .args(["--pdf-title", "."])
+        .assert()
+        .success()
+        .stdout(
+            predicate::str::contains("PDF: Alpha Metadata")
+                .and(predicate::str::contains("PDF: 日本語")),
+        );
+}
+
+#[test]
+fn default_listing_does_not_show_pdf_title() {
+    let directory = tempdir().expect("temporary directory should be created");
+    fs::write(
+        directory.path().join("plain.pdf"),
+        b"%PDF-1.4\ntrailer << /Info << /Title (Hidden In Short Format) >> >>",
+    )
+    .expect("PDF fixture should be written");
+
+    richls()
+        .current_dir(directory.path())
+        .arg("plain.pdf")
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("plain.pdf").and(predicate::str::contains("PDF:").not()));
 }
 
 #[test]
