@@ -19,7 +19,6 @@
 - ファイルまたはディレクトリ直下の一覧表示
 - `-l, --long` による詳細表示
 - `-a, --all` による隠しファイル表示
-- `.gitignore` と `.dockerignore` の基本的なパターンを考慮した除外
 - 名前、サイズ、最終更新日時によるソート
 - `--clean-suggest` による削除候補ファイルの表示
 
@@ -36,7 +35,6 @@ Options:
   -a, --all              Show hidden files
       --respect-ignore   Hide entries matched by .gitignore or .dockerignore
       --sort <KEY>       Sort by name, size, or mtime [default: name]
-      --complete         Generate shell completion files
       --clean-suggest    Suggest cleanup candidate files without deleting them
   -h, --help             Print help
   -V, --version          Print version
@@ -57,8 +55,6 @@ richls -l --respect-ignore --sort mtime documents/
 # 削除候補になりそうな通常ファイルを表示
 richls --clean-suggest
 
-# シェル補完ファイルを completions/ に生成
-richls --complete
 ```
 
 `--sort name` は名前の昇順、`--sort size` はサイズの大きい順、`--sort mtime` は更新日時の新しい順に表示します。
