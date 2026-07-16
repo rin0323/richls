@@ -22,7 +22,6 @@
 - `.gitignore` と `.dockerignore` の基本的なパターンを考慮した除外
 - 名前、サイズ、最終更新日時によるソート
 - `--clean-suggest` による削除候補ファイルの表示
-- Bash、Elvish、Fish、PowerShell、Zsh用の補完ファイル生成
 
 ## 使い方（Usage）
 
@@ -81,17 +80,18 @@ MARK  MODE  LINKS  OWNER  GROUP  SIZE  MTIME  NAME  INFO
 - `SIZE`: 1024を基準にした `B`, `KB`, `MB`, `GB` などのhuman-readable表記
 - `MTIME`: ローカル時刻の `YYYY-MM-DD HH:MM` 形式
 - `NAME`: ファイル名。ディレクトリ名には `/` を付与
-- `INFO`: ディレクトリのREADME概要、またはPDFタイトル
+- `INFO`: PDF内部のメタデータTitle
 
 表示例:
 
 ```text
 new  -rw-r--r--  1 rin staff    1.2KB 2026-07-06 12:00 main.rs
-     drwxr-xr-x  5 rin staff    4.0KB 2026-07-05 10:12 docs/       README: Documentation
      -rw-r--r--  1 rin staff    1.2GB 2026-07-01 09:30 paper.pdf  PDF: Generic Malware Unpacking
 ```
 
-READMEが存在しない場合やPDFタイトルを取得できない場合、`INFO` 欄は空になります。PDFタイトルは、PDF内で直接参照できる文字列形式または16進文字列形式の `/Title` を可能な範囲で読み取ります。圧縮されたメタデータなど、対応していない形式は安全に無視します。
+PDFタイトルは、PDF内部のメタデータ辞書にある `Title` を読み取って表示します。PDFファイル名はタイトルとして扱いません。有効なTitleが存在しない場合、Titleが空または空白だけの場合、PDF解析に失敗した場合は `INFO` 欄を空にし、一覧表示自体は継続します。Title内の前後の空白や改行は一覧表示に合うように正規化します。
+
+互換オプションとして `--pdf-title` を指定した場合も詳細表示が有効になり、PDF内部のメタデータTitleを表示します。
 
 ### 削除候補の表示
 
