@@ -1,3 +1,4 @@
+mod clean_suggest;
 mod cli;
 mod display;
 mod entry;
@@ -28,6 +29,12 @@ fn run() -> Result<(), String> {
 
     let mut entries = listing::collect_entries(&config)?;
     sort::sort_entries(&mut entries, config.sort_key);
+
+    if config.clean_suggest {
+        let suggestions = clean_suggest::collect_clean_suggestions(&entries);
+        println!("{}", clean_suggest::format_clean_suggestions(&suggestions));
+        return Ok(());
+    }
 
     for line in display::format_entries(&entries, &config) {
         println!("{line}");

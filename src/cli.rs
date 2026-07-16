@@ -42,6 +42,10 @@ pub struct Config {
     #[arg(long = "complete")]
     pub completions: bool,
 
+    /// Suggest cleanup candidate files without deleting them
+    #[arg(long)]
+    pub clean_suggest: bool,
+
     // These options were exposed by an earlier CLI. Keep accepting them as
     // compatibility aliases for the complete long format.
     #[arg(long, hide = true)]
@@ -89,6 +93,7 @@ mod tests {
         assert_eq!(config.sort_key, SortKey::Name);
         assert!(!config.long);
         assert!(!config.all);
+        assert!(!config.clean_suggest);
     }
 
     #[test]
@@ -103,6 +108,12 @@ mod tests {
     fn parses_sort() {
         let config = try_parse_args_from(["richls", "--sort=size"]).unwrap();
         assert_eq!(config.sort_key, SortKey::Size);
+    }
+
+    #[test]
+    fn parses_clean_suggest() {
+        let config = try_parse_args_from(["richls", "--clean-suggest"]).unwrap();
+        assert!(config.clean_suggest);
     }
 
     #[test]

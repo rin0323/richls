@@ -57,6 +57,7 @@ mod tests {
             mtime: UNIX_EPOCH,
             mtime_text: "2026-07-06 12:00".to_string(),
             is_new,
+            is_regular_file: true,
             info: None,
         }
     }

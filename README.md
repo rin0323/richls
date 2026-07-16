@@ -14,6 +14,7 @@
 - `-a, --all` による隠しファイル表示
 - `.gitignore` と `.dockerignore` の基本的なパターンを考慮した除外
 - 名前、サイズ、最終更新日時によるソート
+- `--clean-suggest` による削除候補ファイルの表示
 - Bash、Elvish、Fish、PowerShell、Zsh用の補完ファイル生成
 
 ## 詳細表示
@@ -44,6 +45,26 @@ new  -rw-r--r--  1 rin staff    1.2KB 2026-07-06 12:00 main.rs
 
 READMEが存在しない場合やPDFタイトルを取得できない場合、`INFO` 欄は空になります。PDFタイトルは、PDF内で直接参照できる文字列形式または16進文字列形式の `/Title` を可能な範囲で読み取ります。圧縮されたメタデータなど、対応していない形式は安全に無視します。
 
+## 削除候補の表示
+
+`--clean-suggest` を指定すると、通常の `ls` では見落としやすい削除候補になりそうな通常ファイルを表示します。
+
+この機能は候補を表示するだけで、実際にファイルを削除しません。削除確認プロンプトや `rm` 相当の処理も行いません。
+
+削除候補として検出する条件は以下の通りです。
+
+- `copy`, `コピー`, `のコピー`, `(1)` や `(10)` など、コピーされたファイルの可能性がある名前
+- `old`, `backup`, `bak` など、古い版やバックアップの可能性がある名前
+- ファイルサイズが 0B の通常ファイル
+- 最終更新日時が現在時刻から 180 日以上前の通常ファイル
+- `.tmp`, `.swp`, `~` で終わる一時ファイル
+
+使用例:
+
+```bash
+richls --clean-suggest
+```
+
 ## Usage
 
 ```text
@@ -58,6 +79,7 @@ Options:
       --respect-ignore   Hide entries matched by .gitignore or .dockerignore
       --sort <KEY>       Sort by name, size, or mtime [default: name]
       --complete         Generate shell completion files
+      --clean-suggest    Suggest cleanup candidate files without deleting them
   -h, --help             Print help
   -V, --version          Print version
 ```
@@ -77,6 +99,9 @@ richls -la
 
 # ignoreファイルを考慮し、更新日時の新しい順に表示
 richls -l --respect-ignore --sort mtime documents/
+
+# 削除候補になりそうな通常ファイルを表示
+richls --clean-suggest
 
 # シェル補完ファイルを completions/ に生成
 richls --complete
