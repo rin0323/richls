@@ -19,7 +19,7 @@ fn main() {
     }
 }
 
-fn examples() -> [UsageExample; 6] {
+fn examples() -> [UsageExample; 5] {
     [
         UsageExample {
             description: "カレントディレクトリを表示",
@@ -47,10 +47,6 @@ fn examples() -> [UsageExample; 6] {
         UsageExample {
             description: "削除候補になりそうな通常ファイルを表示",
             command: &["richls", "--clean-suggest"],
-        },
-        UsageExample {
-            description: "シェル補完ファイルを生成",
-            command: &["richls", "--complete"],
         },
     ]
 }

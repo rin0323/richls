@@ -220,10 +220,6 @@ Clean suggestions:
         出力順を指定する。
         指定可能な値は name, size, mtime である。
 
---complete
-        Bash、Elvish、Fish、PowerShell、Zsh 用の補完ファイルを
-        completions/ ディレクトリへ生成する。
-
 --clean-suggest
         削除候補になりそうな通常ファイルを理由付きで表示する。
         実際のファイル削除や削除確認プロンプトは行わない。
@@ -256,3 +252,5 @@ Clean suggestions:
 一方、隠しファイルの表示、ignore ファイルの考慮、ソート順の変更は、必要に応じて `-a, --all`、`--respect-ignore`、`--sort` オプションによって有効化する。
 
 `--clean-suggest` 指定時には、削除候補になりそうな通常ファイルを理由付きで表示する。ただし、この機能は候補の表示のみを目的とし、ファイル削除や削除確認プロンプトは行わない。
+
+補完ファイル生成は公開CLI機能ではなく、デバッグビルド専用の開発補助機能として扱う。デバッグビルドでは `--completions` により Bash、Elvish、Fish、PowerShell、Zsh 用の補完ファイルを `assets/completions/` に生成できる。リリースビルドでは `--complete` と `--completions` のどちらも提供しない。
