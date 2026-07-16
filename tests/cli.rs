@@ -31,13 +31,63 @@ fn output_line<'a>(stdout: &'a str, name: &str) -> &'a str {
 
 #[test]
 fn help_documents_main_options_and_long_size_behavior() {
-    richls().arg("--help").assert().success().stdout(
-        predicate::str::contains("-a, --all")
-            .and(predicate::str::contains("-l, --long"))
-            .and(predicate::str::contains("--clean-suggest"))
-            .and(predicate::str::contains("--tagline").not())
-            .and(predicate::str::contains("human-readable")),
-    );
+    let output = richls()
+        .arg("--help")
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let stdout = String::from_utf8(output).expect("stdout should be utf8");
+
+    assert!(stdout.contains("-a, --all"));
+    assert!(stdout.contains("-l, --long"));
+    assert!(stdout.contains("--clean-suggest"));
+    assert!(stdout.contains("human-readable"));
+    assert!(!help_has_option(&stdout, "--tagline"));
+    assert!(!help_has_option(&stdout, "--complete"));
+
+    #[cfg(debug_assertions)]
+    assert!(help_has_option(&stdout, "--completions"));
+}
+
+fn help_has_option(help: &str, option: &str) -> bool {
+    help.split_whitespace().any(|word| word == option)
+}
+
+#[test]
+fn complete_option_is_rejected() {
+    richls()
+        .arg("--complete")
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("--complete"));
+}
+
+#[cfg(debug_assertions)]
+#[test]
+fn completions_option_generates_supported_shell_files() {
+    let directory = tempdir().expect("temporary directory should be created");
+
+    richls()
+        .current_dir(directory.path())
+        .arg("--completions")
+        .assert()
+        .success()
+        .stdout(predicate::str::is_empty());
+
+    for relative in [
+        "bash/richls",
+        "elvish/richls",
+        "fish/richls",
+        "powershell/_richls.ps1",
+        "zsh/_richls",
+    ] {
+        let path = directory.path().join("assets/completions").join(relative);
+        let metadata =
+            fs::metadata(&path).unwrap_or_else(|_| panic!("{} should exist", path.display()));
+        assert!(metadata.len() > 0, "{} should not be empty", path.display());
+    }
 }
 
 #[test]

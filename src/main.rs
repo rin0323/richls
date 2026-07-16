@@ -2,14 +2,13 @@ mod clean_suggest;
 mod cli;
 mod display;
 mod entry;
+#[cfg(debug_assertions)]
 mod gencomp;
 mod ignore;
 mod listing;
 mod metadata;
 mod pdf;
 mod sort;
-
-use std::path::Path;
 
 fn main() {
     if let Err(err) = run() {
@@ -21,8 +20,10 @@ fn main() {
 fn run() -> Result<(), String> {
     let config = cli::parse_args();
 
+    #[cfg(debug_assertions)]
     if config.completions {
-        gencomp::generate(Path::new("completions")).map_err(|err| err.to_string())?;
+        gencomp::generate(std::path::Path::new("assets/completions"))
+            .map_err(|err| err.to_string())?;
         return Ok(());
     }
 

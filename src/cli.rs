@@ -38,8 +38,9 @@ pub struct Config {
     #[arg(long = "sort", value_enum, default_value = "name", value_name = "KEY")]
     pub sort_key: SortKey,
 
-    /// Generate shell completion files
-    #[arg(long = "complete")]
+    #[cfg(debug_assertions)]
+    /// Generate completion script files for supported shells.
+    #[arg(long)]
     pub completions: bool,
 
     /// Suggest cleanup candidate files without deleting them
@@ -91,6 +92,8 @@ mod tests {
         assert_eq!(config.sort_key, SortKey::Name);
         assert!(!config.long);
         assert!(!config.all);
+        #[cfg(debug_assertions)]
+        assert!(!config.completions);
         assert!(!config.clean_suggest);
     }
 
@@ -125,5 +128,17 @@ mod tests {
     #[test]
     fn tagline_option_is_not_defined() {
         assert!(try_parse_args_from(["richls", "--tagline"]).is_err());
+    }
+
+    #[test]
+    fn complete_option_is_not_defined() {
+        assert!(try_parse_args_from(["richls", "--complete"]).is_err());
+    }
+
+    #[cfg(debug_assertions)]
+    #[test]
+    fn completions_option_is_debug_only() {
+        let config = try_parse_args_from(["richls", "--completions"]).unwrap();
+        assert!(config.completions);
     }
 }
