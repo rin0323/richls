@@ -7,7 +7,6 @@ mod ignore;
 mod listing;
 mod metadata;
 mod pdf;
-mod readme;
 mod sort;
 
 use std::path::Path;

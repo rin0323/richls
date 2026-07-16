@@ -51,8 +51,6 @@ pub struct Config {
     #[arg(long, hide = true)]
     pub humanize: bool,
     #[arg(long, hide = true)]
-    pub tagline: bool,
-    #[arg(long, hide = true)]
     pub pdf_title: bool,
     #[arg(long, hide = true)]
     pub new_mark: bool,
@@ -60,7 +58,7 @@ pub struct Config {
 
 impl Config {
     pub fn long_enabled(&self) -> bool {
-        self.long || self.humanize || self.tagline || self.pdf_title || self.new_mark
+        self.long || self.humanize || self.pdf_title || self.new_mark
     }
 
     fn normalized(mut self) -> Self {
@@ -118,9 +116,14 @@ mod tests {
 
     #[test]
     fn compatibility_options_enable_long_format() {
-        for option in ["--humanize", "--tagline", "--pdf-title", "--new-mark"] {
+        for option in ["--humanize", "--pdf-title", "--new-mark"] {
             let config = try_parse_args_from(["richls", option]).unwrap();
             assert!(config.long, "{option} should enable long format");
         }
+    }
+
+    #[test]
+    fn tagline_option_is_not_defined() {
+        assert!(try_parse_args_from(["richls", "--tagline"]).is_err());
     }
 }

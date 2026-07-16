@@ -29,7 +29,6 @@ Register-ArgumentCompleter -Native -CommandName 'richls' -ScriptBlock {
             [CompletionResult]::new('--respect-ignore', '--respect-ignore', [CompletionResultType]::ParameterName, 'Hide entries matched by .gitignore or .dockerignore')
             [CompletionResult]::new('--complete', '--complete', [CompletionResultType]::ParameterName, 'Generate shell completion files')
             [CompletionResult]::new('--humanize', '--humanize', [CompletionResultType]::ParameterName, 'humanize')
-            [CompletionResult]::new('--tagline', '--tagline', [CompletionResultType]::ParameterName, 'tagline')
             [CompletionResult]::new('--pdf-title', '--pdf-title', [CompletionResultType]::ParameterName, 'pdf-title')
             [CompletionResult]::new('--new-mark', '--new-mark', [CompletionResultType]::ParameterName, 'new-mark')
             [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')

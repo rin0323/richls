@@ -23,7 +23,7 @@ _richls() {
 
     case "${cmd}" in
         richls)
-            opts="-l -a -h -V --long --all --respect-ignore --sort --complete --humanize --tagline --pdf-title --new-mark --help --version"
+            opts="-l -a -h -V --long --all --respect-ignore --sort --complete --humanize --pdf-title --new-mark --help --version"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

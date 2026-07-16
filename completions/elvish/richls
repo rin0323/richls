@@ -26,7 +26,6 @@ set edit:completion:arg-completer[richls] = {|@words|
             cand --respect-ignore 'Hide entries matched by .gitignore or .dockerignore'
             cand --complete 'Generate shell completion files'
             cand --humanize 'humanize'
-            cand --tagline 'tagline'
             cand --pdf-title 'pdf-title'
             cand --new-mark 'new-mark'
             cand -h 'Print help'

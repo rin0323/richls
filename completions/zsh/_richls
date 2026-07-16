@@ -23,7 +23,6 @@ _richls() {
 '--respect-ignore[Hide entries matched by .gitignore or .dockerignore]' \
 '--complete[Generate shell completion files]' \
 '--humanize[]' \
-'--tagline[]' \
 '--pdf-title[]' \
 '--new-mark[]' \
 '-h[Print help]' \

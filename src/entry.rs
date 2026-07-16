@@ -4,7 +4,7 @@ use std::io;
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use crate::{metadata, pdf, readme};
+use crate::{metadata, pdf};
 
 #[derive(Debug, Clone)]
 pub struct EntryInfo {
@@ -38,7 +38,7 @@ impl EntryInfo {
         };
         let mtime = metadata.modified().unwrap_or(UNIX_EPOCH);
         let info = if with_rich_info {
-            read_rich_info(&path, &metadata)
+            read_rich_info(&path)
         } else {
             None
         };
@@ -61,11 +61,7 @@ impl EntryInfo {
     }
 }
 
-fn read_rich_info(path: &std::path::Path, metadata: &Metadata) -> Option<String> {
-    if metadata.is_dir() {
-        return readme::read_readme_tagline(path);
-    }
-
+fn read_rich_info(path: &std::path::Path) -> Option<String> {
     if pdf::is_pdf(path) {
         return pdf::read_pdf_title(path);
     }
